@@ -49,3 +49,4 @@ toolkit-stocks/src/data/symbols.py
 toolkit-stocks-v2/data/
 web/tests/results
 concept/
+.vscode

@@ -1,5 +1,4 @@
 # TODO
-
 - [ ] Rewrite the `toolkit-stocks` data-fetching pipeline to optimize the number of requests. `yahooquery` is deprecated, so replace it with a suitable alternative.
 - [ ] Remove hardcoded entries from the stock profile.
 - [ ] Check the sector/industry field mapping and verify that sector and industry values have not been swapped.
