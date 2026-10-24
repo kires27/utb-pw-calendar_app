@@ -30,7 +30,6 @@ __pycache__
 .netlify
 .vscode
 
-.venv-kyos
 .venv
 .env
 .code-workspace
@@ -44,9 +43,14 @@ log
 supabase-auth.json
 
 # custom
-# disallow manual symbols
 toolkit-stocks/src/data/symbols.py
 toolkit-stocks-v2/data/
 web/tests/results
-concept/
+concept
 .vscode
+src/data_cache/
+AGENTS.md
+MEMORY.md
+PLAN*.md
+TODO.md
+work-log.md

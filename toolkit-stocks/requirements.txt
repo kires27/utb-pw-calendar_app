@@ -3,11 +3,13 @@ certifi==2026.2.25
 cffi==2.0.0
 charset-normalizer==3.4.6
 curl_cffi==0.14.0
+defeatbeta-api==0.0.62
 idna==3.11
 lxml==6.0.2
 numpy==2.4.3
 pandas==3.0.1
-psycopg2==2.9.11
+psycopg2-binary==2.9.11
+pyarrow
 pycparser==3.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
@@ -19,3 +21,4 @@ tqdm==4.67.3
 typing_extensions==4.15.0
 urllib3==2.6.3
 yahooquery==2.4.1
+yfinance==0.2.66

@@ -3,7 +3,7 @@ This is NOT a managed monorepo. No root `package.json`, no root workspace.
 Each directory is independently runnable.
 
 ## Rules
-- Always activate skill /caveman
+- Always activate skill caveman
 - Keep this file under 300 lines.
 
 ## Repo Layout
@@ -17,7 +17,6 @@ Each directory is independently runnable.
 | `toolkit-stocks/` | Python data pipeline (yahooquery → Supabase) | this file |
 | `toolkit-congress/` | empty — placeholder |
 | `concept/` | design artifacts, prototypes, calculations — NOT code |
-
 
 # web
 
@@ -130,11 +129,11 @@ Tokens in `app/styles/app.css` CSS variables. Never hardcode colors.
 ## Commands (run from `toolkit-stocks/`)
 
 ```bash
-# Venv (fish shell)
-source .venv-kyos/bin/activate.fish
+# Venv
+source .venv/bin/activate
 
 # Run all data pipelines
-python3 src/main.py --overview --balance --cash --income --dividends --prices --splits --fa
+python3 src/main.py --overview --balance --cash --income --dividends --prices --splits --metrics --fa
 
 # Single pipeline
 python3 src/main.py --fa            # financial analysis only
@@ -144,29 +143,58 @@ python3 src/main.py --overview      # stock overview (industry, sector, etc.)
 flake8 src/
 
 # Tests
-python -m pytest tests/
+python -m pytest tests/              # unit + golden (live auto-excluded via addopts)
+python -m pytest tests/ -m live --override-ini="addopts="   # live smoke (network)
+python tests/capture_fixtures.py     # capture fixture payloads + expected rows (network)
 ```
+
+## Known test status
+
+Full test suite is done; test plan file deleted. Repo roadmap/failover: `PLAN.md`.
+
+- `test_intrinsic_value.py::test_calculate_intrinsic_value` — **xfail**: stale golden value (actual 163.43 vs expected 54.56). Verify which is correct; if algorithm changed intentionally, update expected value and un-xfail.
+
 
 ## CI
 
-Runs `python src/main.py --prices --metrics --fa` daily at 08:00 UTC + on `workflow_dispatch`.
+Workflows in `.github/workflows/` (repo root), Python 3.14:
+
+- `toolkit-stocks-daily.yml` — pipeline `--prices --metrics` daily 08:00 UTC (`DATABASE_URL` secret).
+- `toolkit-stocks-daily-fa.yml` — `--fa` daily 09:00 UTC.
+- `tests.yml` — unit+golden on push/PR (path-filtered to `toolkit-stocks/**`), live smoke on daily schedule + `workflow_dispatch`.
 
 ## Entrypoint & Flow
 
-`src/main.py` — iterates all stock symbols, for each symbol dispatches to builder functions in `domain/yahooquery_builder/`. Builders fetch from yahooquery API, compute derived metrics, write to Supabase/PostgreSQL.
-
-**Order matters** for some args: `--overview` must run first to populate `stock.industry` (used by other pipelines as FK).
+`src/main.py` — parses `--<phase>` args, hands off to `pipeline/orchestrator.py:run()`. Orchestrator runs requested phases in fixed order: overview → statements (balance/cash/income) → market data (prices/splits/dividends, fetched once shared) → metrics → financial analysis. Sources: DefeatBeta bulk parquet (US) + yfinance (non-US), both behind `datasource/`. Writes to Supabase/PostgreSQL via psycopg2-binary.
 
 ## Source Layout
 
 ```
 src/
-  main.py                           entrypoint
+  main.py                           entrypoint — argparse, loads .env, calls pipeline.run(args)
   constants/db_tables.py            table name constants
-  domain/
-    yahooquery_builder/             per-stock data fetch + compute
-      financial_analysis.py         calls fa_calculations, writes to stock_financial_analysis
-      overview.py, metrics.py, etc.
+  datasource/                       data sources (fetch + normalize payloads)
+    base.py                         shared alias maps (STATEMENT_FIELD_MAP), normalize_title
+    defeatbeta.py                   DefeatBetaSource — HF parquet via DuckDB, US bulk
+    yfinance_source.py              YfinanceSource — per-symbol, non-US; *_payload methods
+  pipeline/                         orchestration
+    orchestrator.py                 run(args) — phase dispatch
+    context.py                      build_context — symbols, stock_ids, shared market data
+    overview.py, statements.py, market_data.py, metrics.py, financial_analysis.py
+  lib/                              support code (no domain logic)
+    transforms/                     normalized payload → DB row mappers (source-agnostic)
+      overview.py, statements.py, events.py, prices.py, metrics.py,
+      financial_analysis.py, quality_score.py
+    functions/
+      helper.py                     batch_tickers, evaluate_null_tolerance
+      data_types.py                 time/date converters
+      db_types.py                   DB type helpers
+    supabase/
+      sql_functions.py              shared DB helpers (get_statements_by_stock, insert_data_statement, etc.)
+      init.py                       psycopg2-binary connection singleton from DATABASE_URL
+    module/
+      printf.py                     custom logger
+  domain/                           business logic
     financial_analysis/
       fa_calculations.py            metric computation functions (ROE, margins, ratios, CAGR)
     financial_quality_score/        quality score (separate post-processing, not per-stock)
@@ -174,13 +202,11 @@ src/
       utils/
         constants.py                METRIC_COLUMNS, HIGHER_IS_BETTER, GROUPS definitions
         sql.py                      DB queries for quality score
-    intrinsic_value/                empty/placeholder
-  lib/supabase/
-    sql_functions.py                shared DB helpers (get_statements_by_stock, insert_data_statement, etc.)
-    init.py                         psycopg2 connection singleton from DATABASE_URL
-  functions/
-    helper.py                       batch_tickers, evaluate_null_tolerance
-    data_types.py                   time/date converters
+    intrinsic_value/
+      intrinsic_value.py            calculate_intrinsic_value — DCF (discounted FCFF + terminal value)
+  data/
+    symbols.py                      symbol universe
+    etoro_stocks.py                 etoro stock list helpers
 ```
 
 ## Financial Quality Score
@@ -189,10 +215,11 @@ src/
 
 Flow: industry → get peer IDs → fetch their financial analysis at same fiscal_date/period → min-max normalize 0–100 per metric → group into 6 weighted categories → sum → return `{quality_score, category_scores}`.
 
-### Known Bugs in `utils/sql.py`
+### Known Bugs in `domain/financial_quality_score/utils/sql.py`
 
 - **`get_stock_industry()`** — returns tuple `(industry,)`, not string. Caller must index `[0]`.
-- **`get_stock_ids_within_industry()`** — uses `fetchone()` not `fetchall()`. Returns single peer ID, not all peers. Needs `fetchall()` + list comprehension.
+
+(Fixed: `get_stock_ids_within_industry()` now uses `fetchall()`.)
 
 ## DB Schema Notes
 
@@ -210,4 +237,4 @@ Flow: industry → get peer IDs → fetch their financial analysis at same fisca
 - `from lib.module.printf import printf, level as lv` — custom logger, don't use `print()`.
 - Run tests with `python -m pytest tests/`. `test/` contains scratch/prototype scripts, not the test suite.
 - No pyproject.toml. Dependencies in `requirements.txt`.
-- Venv at `.venv-kyos/` (fish shell activation).
+- Venv at `.venv/` (POSIX activate; old `.venv-kyos` gone). DB driver: **psycopg2-binary** (`requirements.txt` pins version).

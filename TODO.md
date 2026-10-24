@@ -1,5 +1,7 @@
 # TODO
-- [ ] Rewrite the `toolkit-stocks` data-fetching pipeline to optimize the number of requests. `yahooquery` is deprecated, so replace it with a suitable alternative.
+- [x] Rewrite the `toolkit-stocks` data-fetching pipeline to optimize the number of requests. `yahooquery` is deprecated, so replace it with a suitable alternative.
+- [ ] create monitoring tool. (update logs to db, display on website)
+- [x] create tests
 - [ ] Remove hardcoded entries from the stock profile.
 - [ ] Check the sector/industry field mapping and verify that sector and industry values have not been swapped.
 - [ ] Add date and time timestamps to financial analysis data so its latency and freshness can be clarified.
@@ -13,3 +15,6 @@
 - [ ] Add a page showing the difference in benefits between anonymous and logged-in users.
 - [ ] Add a panel to the financials page for comparing a company's score with scores of other companies in the same industry.
 - [ ] Create Excel versions of both calculations: intrinsic value and financial score.
+- [ ] get realtime prices
+
+
