@@ -1,5 +1,8 @@
 # README
 
+[![daily pipeline](https://github.com/kires27/utb-fai/actions/workflows/toolkit-stocks-daily.yml/badge.svg)](https://github.com/kires27/utb-fai/actions/workflows/toolkit-stocks-daily.yml)
+[![daily FA](https://github.com/kires27/utb-fai/actions/workflows/toolkit-stocks-daily-fa.yml/badge.svg)](https://github.com/kires27/utb-fai/actions/workflows/toolkit-stocks-daily-fa.yml)
+
 # Commands
 
 ## Git

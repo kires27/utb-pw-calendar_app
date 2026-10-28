@@ -27,4 +27,15 @@ jobs:
       - name: Run script
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python src/main.py --fa
+        run: python src/main.py --prod --fetch fa
+
+      - name: Verify run
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -f run_summary.txt ]; then
+            python src/verify.py --fa --log run_summary.txt
+          else
+            python src/verify.py --fa
+          fi

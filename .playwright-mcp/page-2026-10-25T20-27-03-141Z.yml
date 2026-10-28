@@ -1,0 +1,56 @@
+- main [ref=f3e3]:
+  - generic [ref=f3e5]:
+    - navigation [ref=f3e7]:
+      - link [ref=f3e8] [cursor=pointer]:
+        - /url: /fundamental-analysis
+        - paragraph [ref=f3e9]: investing
+      - link [ref=f3e10] [cursor=pointer]:
+        - /url: /watchlist
+        - paragraph [ref=f3e11]: watchlists
+      - link [ref=f3e12] [cursor=pointer]:
+        - /url: /available-stocks
+        - paragraph [ref=f3e13]: symbols
+    - generic [ref=f3e14]:
+      - link [ref=f3e15] [cursor=pointer]:
+        - /url: /auth/login
+        - button "Sign in" [ref=f3e16]
+      - link [ref=f3e17] [cursor=pointer]:
+        - /url: /auth/register
+        - button "Sign up" [ref=f3e18]
+  - generic [ref=f3e19]:
+    - textbox "Search stocks..." [ref=f3e26]
+    - generic [ref=f3e27]:
+      - generic [ref=f3e28]:
+        - generic [ref=f3e29]: A
+        - generic [ref=f3e30]:
+          - heading "AAPL" [level=3] [ref=f3e31]
+          - generic [ref=f3e32]: Apple Inc. · NasdaqGS · USD
+        - generic [ref=f3e33]:
+          - heading "347.725" [level=3] [ref=f3e34]
+          - paragraph [ref=f3e35]: ▼ -0.50$ (-0.00%)
+        - button [ref=f3e36] [cursor=pointer]
+      - generic [ref=f3e38]:
+        - link [ref=f3e39] [cursor=pointer]:
+          - /url: /fundamental-analysis/AAPL/financials
+          - button [ref=f3e40]:
+            - paragraph [ref=f3e41]: Financials
+        - link [ref=f3e42] [cursor=pointer]:
+          - /url: /fundamental-analysis/AAPL/intrinsic-value
+          - button [ref=f3e43]:
+            - paragraph [ref=f3e44]: Intrinsic Value
+        - link [ref=f3e45] [cursor=pointer]:
+          - /url: /fundamental-analysis/AAPL/stock-profile
+          - button [ref=f3e46]:
+            - paragraph [ref=f3e47]: Profile
+  - generic [ref=f3e49]:
+    - paragraph [ref=f3e50]: ©2026 Halite. All rights reserved.
+    - generic [ref=f3e51]:
+      - link [ref=f3e52] [cursor=pointer]:
+        - /url: /privacy
+        - paragraph [ref=f3e53]: Privacy Policy
+      - link [ref=f3e54] [cursor=pointer]:
+        - /url: /terms
+        - paragraph [ref=f3e55]: Terms of Service
+      - link [ref=f3e56] [cursor=pointer]:
+        - /url: /disclaimer
+        - paragraph [ref=f3e57]: Disclaimer

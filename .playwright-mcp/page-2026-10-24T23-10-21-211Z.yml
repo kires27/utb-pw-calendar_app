@@ -1,0 +1,26 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - button "Menu" [ref=e7] [cursor=pointer]
+    - generic [ref=e9]:
+      - link [ref=e10] [cursor=pointer]:
+        - /url: /auth/login
+        - button "Sign in" [ref=e11]
+      - link [ref=e12] [cursor=pointer]:
+        - /url: /auth/register
+        - button "Sign up" [ref=e13]
+  - generic [ref=e15]:
+    - heading "Research a stock" [level=3] [ref=e16]
+    - generic [ref=e17]: Search by ticker symbol or company name to view financials, intrinsic value, and profile data.
+    - textbox "Search stocks..." [ref=e22]
+  - generic [ref=e24]:
+    - paragraph [ref=e25]: ©2026 Halite. All rights reserved.
+    - generic [ref=e26]:
+      - link [ref=e27] [cursor=pointer]:
+        - /url: /privacy
+        - paragraph [ref=e28]: Privacy Policy
+      - link [ref=e29] [cursor=pointer]:
+        - /url: /terms
+        - paragraph [ref=e30]: Terms of Service
+      - link [ref=e31] [cursor=pointer]:
+        - /url: /disclaimer
+        - paragraph [ref=e32]: Disclaimer

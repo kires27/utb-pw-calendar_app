@@ -47,6 +47,7 @@ export const API = {
 		get_stock: (symbol) => `/api/stock/${symbol}`,
 		get_metric: (symbol) => `/api/stock/metric/${symbol}`,
 		get_financials: (symbol) => `/api/stock/financial-analysis/${symbol}`,
+		get_events: (symbol) => `/api/stock/events/${symbol}`,
 		get_intrinsic_value: (symbol) => `/api/stock/intrinsic-value/${symbol}`,
 		get_search_history: (symbols) => {
 			const joined = Array.isArray(symbols) ? symbols.join(',') : symbols

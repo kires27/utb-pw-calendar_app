@@ -61,9 +61,95 @@ const stockData = computed(() => {
 		positive: Number(metric.regular_market_change ?? 0) >= 0,
 		sector: basic.sector ?? "",
 		exchange: basic.exchange ?? "",
+		currency: metric.currency ?? "USD",
 	}
-
 })
+
+// ---- live price freshness (client-only: SSR/hydration quirk per AGENTS.md) ----
+const isHydrated = ref(false)
+const isStale = computed(() => Boolean(stockDataRaw.value?.metric?.stale))
+const updatedAt = ref(null) // Date of last known regular_market_time
+const ageLabel = ref("")
+
+function syncUpdatedAt() {
+	const ts = stockDataRaw.value?.metric?.regular_market_time
+	updatedAt.value = ts ? new Date(ts) : null
+	tickAge()
+}
+
+function tickAge() {
+	if (!updatedAt.value) {
+		ageLabel.value = ""
+		return
+	}
+	const s = Math.max(0, Math.round((Date.now() - updatedAt.value.getTime()) / 1000))
+	ageLabel.value = s < 60 ? `Updated ${s}s ago` : `Updated ${Math.floor(s / 60)}m ago`
+}
+
+const supabase = useSupabaseClient()
+const stockId = computed(() => stockDataRaw.value?.basic?.id ?? null)
+let heartbeat = null
+let ageTicker = null
+let channel = null
+
+async function refreshMetric() {
+	try {
+		const fresh = await $fetch(API.stocks.get_metric(symbol.value))
+		if (fresh && !fresh.stale) stockDataRaw.value = { ...stockDataRaw.value, metric: fresh }
+		syncUpdatedAt()
+	} catch {
+		// network hiccup — keep current data, next beat retries
+	}
+}
+
+onMounted(async () => {
+	isHydrated.value = true
+	syncUpdatedAt()
+
+	// heartbeat: keeps interest alive + refreshes while user stares at page
+	heartbeat = setInterval(refreshMetric, 60_000)
+	ageTicker = setInterval(tickAge, 10_000)
+
+	await rekeyChannel()
+})
+
+onBeforeUnmount(() => {
+	clearInterval(heartbeat)
+	clearInterval(ageTicker)
+	if (channel) supabase.removeChannel(channel)
+})
+
+watch(symbol, () => {
+	// symbol changed via searchbar: page meta re-runs useAsyncData; rekey channel
+	if (!import.meta.client) return
+	if (channel) supabase.removeChannel(channel)
+	rekeyChannel()
+})
+
+async function rekeyChannel() {
+	if (!stockId.value) return
+	// realtime push: any poller/other-user refresh lands here without polling
+	await supabase.realtime.setAuth()
+	channel = supabase
+		.channel(`stock-metric-${symbol.value}`)
+		.on(
+			"postgres_changes",
+			{
+				event: "UPDATE",
+				schema: "public",
+				table: "stock_metric",
+				filter: `stock_id=eq.${stockId.value}`,
+			},
+			(payload) => {
+				stockDataRaw.value = {
+					...stockDataRaw.value,
+					metric: { ...stockDataRaw.value?.metric, ...payload.new },
+				}
+				syncUpdatedAt()
+			}
+		)
+		.subscribe()
+}
 
 // history
 const history = useLocalStorage(SEARCHBAR_HISTORY_KEY, [])
@@ -96,7 +182,7 @@ function pushHistory(symbol) {
 					<Text variant="label" tone="muted">
 						{{ stockData.name }}&nbsp;·&nbsp;{{
 							stockData.exchange
-						}}&nbsp;·&nbsp;USD
+						}}&nbsp;·&nbsp;{{ stockData.currency }}
 					</Text>
 				</div>
 				<div class="stock-price-block">
@@ -105,6 +191,10 @@ function pushHistory(symbol) {
 						{{ stockData.positive ? "▲" : "▼" }}
 						{{ stockData.changeAmount }}
 						({{ stockData.change }})
+					</Text>
+					<Text v-if="isHydrated" variant="label" :tone="isStale ? 'red' : 'muted'">
+						<template v-if="isStale">⚠ stale</template>
+						<template v-else-if="ageLabel">{{ ageLabel }}</template>
 					</Text>
 				</div>
 				<Button variant="primary" size="sm" alt="add to watchlist" @click="openWatchlistMenu">

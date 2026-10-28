@@ -68,6 +68,20 @@ export function capitalizeFirstLetter(word) {
 	return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
+/**
+ * Format a number as currency string.
+ * @param {number|null} value
+ * @param {string} currency - ISO code e.g. "USD", "EUR"
+ * @param {number} decimals
+ * @returns {string|null}
+ */
+export function formatCurrency(value, currency = "USD", decimals = 2) {
+	if (value == null || isNaN(value)) return null;
+	const symbolMap = { USD: "$", EUR: "€", GBP: "£", JPY: "¥" };
+	const symbol = symbolMap[currency] ?? currency + " ";
+	return symbol + Number(value).toFixed(decimals);
+}
+
 
 
 

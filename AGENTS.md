@@ -133,14 +133,11 @@ Tokens in `app/styles/app.css` CSS variables. Never hardcode colors.
 source .venv/bin/activate
 
 # Run all data pipelines
-python3 src/main.py --overview --balance --cash --income --dividends --prices --splits --metrics --fa
+python3 src/main.py --prod --fetch all
 
 # Single pipeline
-python3 src/main.py --fa            # financial analysis only
-python3 src/main.py --overview      # stock overview (industry, sector, etc.)
-
-# Lint
-flake8 src/
+python3 src/main.py --prod --fetch fa            # financial analysis only
+python3 src/main.py --dev --fetch overview       # dev: manual symbol list + log file
 
 # Tests
 python -m pytest tests/              # unit + golden (live auto-excluded via addopts)
@@ -223,6 +220,7 @@ Flow: industry → get peer IDs → fetch their financial analysis at same fisca
 
 ## DB Schema Notes
 
+- `stock_dividend.dividend` stores split-adjusted amounts (today-basis, not declared). New split insert rebases older rows via `trg_stock_split_recalc` trigger (AFTER INSERT on `stock_split`); `split_adjusted_on` column (default `now()`) guards against double division — never set it from Python. Pipeline must NEVER update `stock_split` (INSERT ... ON CONFLICT DO NOTHING only); `build_split_rows` sorts events oldest-first.
 - `stock_financial_analysis` table key columns: `stock_id`, `fiscal_date`, `period` (enum: `FY`/`Q1`–`Q4`/`TTM`), `quality_score`, plus 19 metric columns.
 - All percent/ratio fields stored as raw values (0–1 or 0–100), not formatted strings.
 - Metric columns: `gross_margin`, `operating_margin`, `net_margin`, `return_on_equity`, `earnings_per_share`, `debt_to_equity`, `debt_growth`, `current_ratio`, `revenue_growth`, `gross_income_growth`, `net_income_growth`, `retained_earning_growth`, `revenues_per_share`, `capital_index`, `payback_period`, `assets_price`, `pe_ratio`, `pb_ratio`, `dividend_yield`.
@@ -231,7 +229,7 @@ Flow: industry → get peer IDs → fetch their financial analysis at same fisca
 
 ## Conventions
 
-- Flake8 config in `.flake8`: ignores `E501,W191,W293,E401,E701,E402,W504,E242,E224,E201,E261`.
+- **Don't use flake8 for formatting** (user forbade). If script runs + tests pass, it's good.
 - `__init__.py` gets `# noqa: F401` per-file-ignore.
 - Exception handling pattern: `except Exception as err: tb = traceback.extract_tb(err.__traceback__)[-1]; printf(f"{err} (File '{tb.filename}', line {tb.lineno})", lv.ERROR)`.
 - `from lib.module.printf import printf, level as lv` — custom logger, don't use `print()`.

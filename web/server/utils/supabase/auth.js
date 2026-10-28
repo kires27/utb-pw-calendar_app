@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export function useSupabaseAdmin() {
 	const config = useRuntimeConfig()
-	return createClient(config.supabaseUrl, config.supabaseKey)
+	return createClient(config.supabaseUrl, config.supabaseSecretKey)
 }
 
 // !!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!!!! 

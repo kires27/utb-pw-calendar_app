@@ -1,0 +1,47 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - button "Menu" [ref=e7] [cursor=pointer]
+    - generic [ref=e9]:
+      - link [ref=e10] [cursor=pointer]:
+        - /url: /auth/login
+        - button "Sign in" [ref=e11]
+      - link [ref=e12] [cursor=pointer]:
+        - /url: /auth/register
+        - button "Sign up" [ref=e13]
+  - generic [ref=e14]:
+    - textbox "Search stocks..." [ref=e21]
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: A
+        - generic [ref=e25]:
+          - heading "AAPL" [level=3] [ref=e26]
+          - generic [ref=e27]: Apple Inc. · NasdaqGS · USD
+        - generic [ref=e28]:
+          - heading "347.725" [level=3] [ref=e29]
+          - paragraph [ref=e30]: ▼ -0.50$ (-0.00%)
+        - button [ref=e31] [cursor=pointer]
+      - generic [ref=e33]:
+        - link [ref=e34] [cursor=pointer]:
+          - /url: /fundamental-analysis/AAPL/financials
+          - button [ref=e35]:
+            - paragraph [ref=e36]: Financials
+        - link [ref=e37] [cursor=pointer]:
+          - /url: /fundamental-analysis/AAPL/intrinsic-value
+          - button [ref=e38]:
+            - paragraph [ref=e39]: Intrinsic Value
+        - link [ref=e40] [cursor=pointer]:
+          - /url: /fundamental-analysis/AAPL/stock-profile
+          - button [ref=e41]:
+            - paragraph [ref=e42]: Profile
+  - generic [ref=e44]:
+    - paragraph [ref=e45]: ©2026 Halite. All rights reserved.
+    - generic [ref=e46]:
+      - link [ref=e47] [cursor=pointer]:
+        - /url: /privacy
+        - paragraph [ref=e48]: Privacy Policy
+      - link [ref=e49] [cursor=pointer]:
+        - /url: /terms
+        - paragraph [ref=e50]: Terms of Service
+      - link [ref=e51] [cursor=pointer]:
+        - /url: /disclaimer
+        - paragraph [ref=e52]: Disclaimer

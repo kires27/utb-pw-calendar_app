@@ -1,8 +1,9 @@
 # TODO
 - [x] Rewrite the `toolkit-stocks` data-fetching pipeline to optimize the number of requests. `yahooquery` is deprecated, so replace it with a suitable alternative.
-- [ ] create monitoring tool. (update logs to db, display on website)
+- [x] create monitoring tool
 - [x] create tests
-- [ ] Remove hardcoded entries from the stock profile.
+- [x] get realtime prices
+- [x] Remove hardcoded entries from the stock profile.
 - [ ] Check the sector/industry field mapping and verify that sector and industry values have not been swapped.
 - [ ] Add date and time timestamps to financial analysis data so its latency and freshness can be clarified.
 - [ ] Add a popup to each financial metric that appears on hover and explains what the metric means and how it is calculated.
@@ -15,6 +16,9 @@
 - [ ] Add a page showing the difference in benefits between anonymous and logged-in users.
 - [ ] Add a panel to the financials page for comparing a company's score with scores of other companies in the same industry.
 - [ ] Create Excel versions of both calculations: intrinsic value and financial score.
-- [ ] get realtime prices
-
-
+- [ ] mechanism to keep history price at 10 years oldest	
+- [-] when dividend is rounded to 2 decimals, the older years have amount value 0. dividends shouldnt be rounded. force update db
+- [ ] what is symbol_activity table from db
+- [ ] make tests for web
+- [x] set SUPABASE_SECRET_KEY in netlify env vars 
+- [ ] translate webpage to czech

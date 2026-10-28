@@ -1,6 +1,7 @@
 <script setup>
 import { cached } from "~/utils/cache"
 import { API } from "#shared/constants/routes"
+import { formatCurrency } from "~/utils/formatData"
 
 useHead({ title: "MEIC — Company Profile" })
 
@@ -10,15 +11,36 @@ const symbol = computed(() =>
 )
 
 const stockData = ref(null)
+const events = ref(null)
 
 watch(symbol, async () => {
 	stockData.value = null
+	events.value = null
 
 	stockData.value = await cached(
 		`fa-profile-${symbol.value}`,
 		() => $fetch(API.stocks.get_stock(symbol.value)),
 	)
+	events.value = await cached(
+		`fa-events-${symbol.value}`,
+		() => $fetch(API.stocks.get_events(symbol.value)),
+	)
 }, { immediate: true })
+
+// Group dividends by year, newest first — year subtotal shows trend at a glance
+const dividendYears = computed(() => {
+	const byYear = new Map()
+	for (const d of events.value?.dividends ?? []) {
+		const year = d.date.slice(0, 4)
+		if (!byYear.has(year)) byYear.set(year, [])
+		byYear.get(year).push(d)
+	}
+	return [...byYear.entries()].map(([year, payments]) => ({
+		year,
+		payments,
+		total: payments.reduce((sum, p) => sum + p.amount, 0),
+	}))
+})
 
 const companyInfo = computed(() => [
 	{ label: "Full Name", value: stockData.value?.name },
@@ -37,35 +59,25 @@ const description = computed(() => [stockData.value?.description])
 
 const leadership = computed(() => stockData.value?.key_executives ?? [])
 
-const revenueByProduct = [
-	{ name: "Automotive", value: 85, color: "var(--teal)" },
-	{ name: "Energy", value: 12, color: "var(--blue)" },
-	{ name: "Services", value: 3, color: "var(--purple)" },
-]
+// Cap dividend cell at leadership cell height (grid stretches both otherwise)
+const leadershipCell = ref(null)
+const dividendMaxHeight = ref(null)
 
-const markets = [
-	{ name: "United States", value: 53 },
-	{ name: "China", value: 30 },
-	{ name: "Europe", value: 11 },
-	{ name: "Rest of World", value: 6 },
-]
-
-const marketColors = [
-	"var(--teal)",
-	"var(--gold)",
-	"var(--purple)",
-	"var(--blue)",
-]
-
-const facilities = [
-	{ location: "Fremont, CA", products: "Model S, X, 3, Y" },
-	{
-		location: "Shanghai, China",
-		products: "Model 3, Y (export)",
-	},
-	{ location: "Berlin, Germany", products: "Model Y (EU)" },
-	{ location: "Austin, TX", products: "Cybertruck, Model Y" },
-]
+let ro = null
+watch(leadershipCell, (el) => {
+	ro?.disconnect()
+	if (!el) {
+		dividendMaxHeight.value = null
+		return
+	}
+	const update = () => {
+		dividendMaxHeight.value = el.offsetHeight + "px"
+	}
+	ro = new ResizeObserver(update)
+	ro.observe(el)
+	update()
+}, { immediate: true, flush: "post" })
+onBeforeUnmount(() => ro?.disconnect())
 
 </script>
 
@@ -106,12 +118,14 @@ const facilities = [
 			</div>
 
 			<!-- Leadership -->
-			<div class="cell">
+			<div ref="leadershipCell" class="cell">
 				<div class="cell-header">
 					<Text variant="label">Leadership</Text>
 				</div>
 				<div v-for="person in leadership" :key="person.name" class="person-row">
-					<div class="person-avatar"><Text variant="body-sm" tone="muted">{{ person.initials }}</Text></div>
+					<div class="person-avatar">
+						<Icon name="material-symbols:person-outline" class="person-avatar-icon" />
+					</div>
 					<div class="person-info">
 						<Text variant="body-sm" weight="medium">{{ person.name }}</Text>
 						<Text variant="body-sm" tone="muted">{{ person.title }}</Text>
@@ -121,77 +135,52 @@ const facilities = [
 				</div>
 			</div>
 
-
-			
-
-
-
-			<!-- Revenue Breakdown -->
-			<div class="cell">
+			<!-- Dividend History -->
+			<div class="cell dividend-cell" :style="{ maxHeight: dividendMaxHeight }">
 				<div class="cell-header">
-					<Text variant="label">Revenue Breakdown By Product</Text>
+					<Text variant="label">Dividend History</Text>
 				</div>
-				<div class="donut-row">
-					<div class="donut-wrap">
-						<svg viewBox="0 0 100 100" width="88" height="88">
-							<circle cx="50" cy="50" r="40" fill="none" stroke="var(--bg-hover)" stroke-width="14" />
-							<circle cx="50" cy="50" r="40" fill="none" stroke="var(--teal)" stroke-width="14"
-								stroke-dasharray="213 38" stroke-dashoffset="0" opacity="0.85"
-								transform="rotate(-90 50 50)" />
-							<circle cx="50" cy="50" r="40" fill="none" stroke="var(--blue)" stroke-width="14"
-								stroke-dasharray="30 221" stroke-dashoffset="-213" opacity="0.75"
-								transform="rotate(-90 50 50)" />
-							<circle cx="50" cy="50" r="40" fill="none" stroke="var(--purple)" stroke-width="14"
-								stroke-dasharray="8 243" stroke-dashoffset="-243" opacity="0.75"
-								transform="rotate(-90 50 50)" />
-							<text x="50" y="54" text-anchor="middle" fill="var(--fg)" font-family="var(--font-main)"
-								font-size="11" font-weight="500">85%</text>
-						</svg>
-						<div class="donut-legend">
-							<div v-for="item in revenueByProduct" :key="item.name" class="legend-item">
-								<div class="legend-dot" :style="{ background: item.color }"></div>
-								<Text variant="body-sm" tone="muted">{{ item.name }}</Text>
-								<Text variant="body-sm" tone="muted" class="legend-pct">{{ item.value }}%</Text>
+				<template v-if="dividendYears.length">
+					<div class="dividend-summary">
+						<Text variant="body-sm" tone="muted">
+							{{ dividendYears[0].payments[0].amount }} latest · {{ (events.dividends ?? []).length }} payments since
+							{{ dividendYears[dividendYears.length - 1].year }}
+						</Text>
+					</div>
+					<div class="scroll-list">
+						<div v-for="y in dividendYears" :key="y.year" class="year-group">
+							<div class="year-header">
+								<Text variant="body-sm" weight="medium">{{ y.year }}</Text>
+								<Text variant="body-sm" tone="muted">
+									{{ y.payments.length }} payments · {{ formatCurrency(y.total, stockData.currency) }}
+								</Text>
+							</div>
+							<div v-for="p in y.payments" :key="p.date" class="payment-row">
+								<Text variant="body-sm" tone="muted">{{ p.date }}</Text>
+								<Text variant="body-sm">{{ formatCurrency(p.amount, stockData.currency) }}</Text>
 							</div>
 						</div>
 					</div>
-				</div>
+				</template>
+				<Text v-else variant="body-sm" tone="muted">No dividend history</Text>
 			</div>
 
-
-
-			<!-- Markets + Facilities -->
+			<!-- Stock Splits -->
 			<div class="cell">
 				<div class="cell-header">
-					<Text variant="label">Geographic Markets</Text>
+					<Text variant="label">Stock Splits</Text>
 				</div>
-				<div class="market-list">
-					<div v-for="(market, idx) in markets" :key="market.name" class="market-item">
-						<div class="market-header">
-							<Text variant="body-sm" tone="muted">{{ market.name }}</Text>
-							<Text variant="body-sm" weight="medium">{{ market.value }}%</Text>
-						</div>
-						<div class="track">
-							<div class="track-fill" :style="{
-								width: market.value + '%',
-								background: marketColors[idx],
-							}"></div>
-						</div>
-					</div>
-				</div>
-
-				<div class="cell-header" style="margin-top: 1.5rem">
-					<Text variant="label">Production Facilities</Text>
-				</div>
-				<table class="info-table">
+				<table v-if="events?.splits?.length" class="info-table">
 					<tbody>
-						<tr v-for="fac in facilities" :key="fac.location">
-							<td><Text variant="body-sm" tone="muted">{{ fac.location }}</Text></td>
-							<td><Text variant="body-sm">{{ fac.products }}</Text></td>
+						<tr v-for="s in events.splits" :key="s.date">
+							<td><Text variant="body-sm" weight="medium">{{ s.factor }}:1</Text></td>
+							<td><Text variant="body-sm" tone="muted">{{ s.date }}</Text></td>
 						</tr>
 					</tbody>
 				</table>
+				<Text v-else variant="body-sm" tone="muted">No stock splits</Text>
 			</div>
+
 		</div>
 	</Container>
 </template>
@@ -214,6 +203,8 @@ const facilities = [
 /* ── Cell ── */
 .cell {
 	padding: 1.5rem;
+	display: flex;
+	flex-direction: column;
 }
 
 /* ── Description spans 2 columns ── */
@@ -264,6 +255,52 @@ const facilities = [
 	text-align: right;
 }
 
+/* ── Dividend cell — shrink to content, capped at leadership height (via JS) ── */
+.dividend-cell {
+	align-self: start;
+	max-height: 10rem;
+}
+
+/* ── Dividend scroll list ── */
+.dividend-summary {
+	padding-bottom: 0.6rem;
+	border-bottom: 1px solid var(--border);
+	margin-bottom: 0.8rem;
+}
+
+.scroll-list {
+	flex: 1;
+	min-height: 20rem;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-hi) transparent;
+}
+
+.year-group {
+	margin-bottom: 0.8rem;
+}
+
+.year-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.4rem 0.5rem;
+	background: var(--bg-hover);
+	position: sticky;
+	top: 0;
+}
+
+.payment-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.35rem 0.5rem 0.35rem 1.25rem;
+	border-bottom: 1px solid var(--border);
+}
+
+.payment-row:last-child {
+	border-bottom: none;
+}
+
 /* ── Description ── */
 .desc-text {
 	margin-bottom: 1rem;
@@ -271,44 +308,6 @@ const facilities = [
 
 .desc-text:last-of-type {
 	margin-bottom: 0;
-}
-
-/* ── Revenue donut ── */
-.donut-row {
-	display: flex;
-	gap: 1.5rem;
-}
-
-.donut-wrap {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.6rem;
-}
-
-.donut-legend {
-	display: flex;
-	flex-direction: column;
-	gap: 0.3rem;
-	width: 100%;
-}
-
-.legend-item {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.legend-dot {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	flex-shrink: 0;
-}
-
-.legend-pct {
-	margin-left: auto;
 }
 
 /* ── Leadership ── */
@@ -340,44 +339,20 @@ const facilities = [
 	flex-shrink: 0;
 }
 
+.person-avatar-icon {
+	width: 18px;
+	height: 18px;
+	color: var(--fg-3);
+}
+
 .person-info {
 	flex: 1;
-}
-
-/* ── Markets ── */
-.market-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.65rem;
-}
-
-.market-header {
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 0.3rem;
-}
-
-/* ── Track bar — unified ── */
-.track {
-	height: 3px;
-	background: var(--bg-hover);
-	overflow: hidden;
-}
-
-.track-fill {
-	height: 100%;
-	transition: width 0.4s ease;
 }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
 	.profile-grid {
 		grid-template-columns: 1fr;
-	}
-
-	.donut-row {
-		flex-direction: column;
-		align-items: flex-start;
 	}
 }
 </style>
