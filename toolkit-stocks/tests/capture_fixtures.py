@@ -64,7 +64,7 @@ def capture_defeatbeta():
 	write(base / "officers.json", officers)
 
 	# expected rows
-	write(expected_path(base / "prices.json"), strip_volatile(build_price_rows(sym, 1, prices, divs, splits, None)))
+	write(expected_path(base / "prices.json"), strip_volatile(build_price_rows(sym, 1, prices, None)))
 	write(expected_path(base / "dividends.json"), strip_volatile(build_dividend_rows(sym, 1, divs, None)))
 	write(expected_path(base / "splits.json"), strip_volatile(build_split_rows(sym, 1, splits, None)))
 	write(expected_path(base / "profile.json"), strip_volatile(build_overview_row(sym, profile, officers, {}, None)))
@@ -94,7 +94,7 @@ def capture_yfinance_symbol(source, sym: str, intl: bool):
 
 	# expected rows (stock_id=1 sentinel, latest=None -> full history)
 	write(expected_path(base / "history.json"), strip_volatile(build_price_rows(
-		sym, 1, history["price_rows"], history["div_events"], history["split_events"], None
+		sym, 1, history["price_rows"], None
 	)))
 	write(expected_path(base / "info.json"), strip_volatile(build_overview_row(sym, info, None, {}, info)))
 	write(expected_path(base / "quote.json"), strip_volatile(build_metric_row(sym, 1, quote)))
@@ -136,7 +136,7 @@ def _recompute_expected():
 				prices = json.load(open(sym_dir / "prices.json"))
 				divs = json.load(open(sym_dir / "dividends.json"))
 				splits = json.load(open(sym_dir / "splits.json"))
-				write(expected_path(sym_dir / "prices.json"), strip_volatile(build_price_rows(sym, 1, prices, divs, splits, None)))
+				write(expected_path(sym_dir / "prices.json"), strip_volatile(build_price_rows(sym, 1, prices, None)))
 				write(expected_path(sym_dir / "dividends.json"), strip_volatile(build_dividend_rows(sym, 1, divs, None)))
 				write(expected_path(sym_dir / "splits.json"), strip_volatile(build_split_rows(sym, 1, splits, None)))
 				profile = json.load(open(sym_dir / "profile.json"))
@@ -150,7 +150,7 @@ def _recompute_expected():
 			else:
 				h = json.load(open(sym_dir / "history.json"))
 				write(expected_path(sym_dir / "history.json"), strip_volatile(build_price_rows(
-					sym, 1, h["price_rows"], h["div_events"], h["split_events"], None
+					sym, 1, h["price_rows"], None
 				)))
 				info = json.load(open(sym_dir / "info.json"))
 				write(expected_path(sym_dir / "info.json"), strip_volatile(build_overview_row(sym, info, None, {}, info)))

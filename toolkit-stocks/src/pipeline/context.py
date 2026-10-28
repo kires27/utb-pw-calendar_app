@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass, field
 
 from datasource import DefeatBetaSource, YFinanceSource, FailoverSource, route_symbols
@@ -34,22 +33,31 @@ def refresh_ids(ctx: RunContext):
 
 
 def market_data(ctx: RunContext) -> dict | None:
-	'''Lazy batched EOD market data (prices, shares, dividends) for US symbols.'''
+	'''Lazy batched EOD market data (prices, shares, dividends, splits) for US
+	symbols. Fetches only the datasets the requested phases need.'''
 	if ctx.market_data_cache is None and ctx.us_symbols:
-		printf("-- Fetching market data (prices, shares, dividends) via FailoverSource --", lv.INFO)
+		args = ctx.args
+		metrics = bool(getattr(args, "metrics", False)) or bool(getattr(args, "fa", False))
+		want = {
+			"prices": bool(getattr(args, "prices", False)) or metrics,
+			"shares": metrics,
+			"dividends": bool(getattr(args, "dividends", False)) or metrics,
+			"splits": bool(getattr(args, "splits", False)),
+		}
+		printf("-- Fetching market data --", lv.INFO)
 		ctx.market_data_cache = {
-			"prices": ctx.ds.prices(ctx.us_symbols),
-			"shares": ctx.ds.shares_outstanding(ctx.us_symbols),
-			"dividends": ctx.ds.dividends(ctx.us_symbols),
+			"prices": ctx.ds.prices(ctx.us_symbols) if want["prices"] else {},
+			"shares": ctx.ds.shares_outstanding(ctx.us_symbols) if want["shares"] else {},
+			"dividends": ctx.ds.dividends(ctx.us_symbols) if want["dividends"] else {},
+			"splits": ctx.ds.splits(ctx.us_symbols) if want["splits"] else {},
 		}
 	return ctx.market_data_cache
 
 
 def build_context(args: object) -> RunContext:
-	if os.getenv("GITHUB_ACTIONS") != "true":
+	manual_symbols = None
+	if getattr(args, "dev", False):
 		from data.symbols import manual_symbols
-	else:
-		manual_symbols = None
 
 	symbols: list[str] = manual_symbols if manual_symbols else get_symbols()
 	printf(f"-- All symbols: \n{symbols}\n--", lv.INFO)

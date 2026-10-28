@@ -61,8 +61,7 @@ pytestmark = pytest.mark.skipif(not SOURCES, reason="no fixtures captured yet - 
 @pytest.mark.parametrize("sym_dir", [d for s, d in _sym_dirs() if s == "defeatbeta"], ids=lambda d: d.name)
 class TestDefeatBetaGolden:
 	def test_prices(self, sym_dir):
-		rows = build_price_rows(sym_dir.name.upper(), 1, _load(sym_dir / "prices.json"),
-			_load(sym_dir / "dividends.json"), _load(sym_dir / "splits.json"), None)
+		rows = build_price_rows(sym_dir.name.upper(), 1, _load(sym_dir / "prices.json"), None)
 		_ = _assert_expected(rows, expected_path(sym_dir / "prices.json"))
 
 	def test_dividends(self, sym_dir):
@@ -92,7 +91,7 @@ class TestDefeatBetaGolden:
 class TestYfinanceGolden:
 	def test_history(self, sym_dir):
 		h = _load(sym_dir / "history.json")
-		rows = build_price_rows(sym_dir.name.upper(), 1, h["price_rows"], h["div_events"], h["split_events"], None)
+		rows = build_price_rows(sym_dir.name.upper(), 1, h["price_rows"], None)
 		_ = _assert_expected(rows, expected_path(sym_dir / "history.json"))
 
 	def test_info(self, sym_dir):

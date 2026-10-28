@@ -1,9 +1,16 @@
 
+import constants.db_tables as dbt
+
+
 def query_insert(table_name, data: dict) -> list[str, list]:
 	'''data: key-value pair works like column-row pair'''
 
 	columns = ", ".join(data.keys())
 	placeholders = ", ".join(["%s"] * len(data))
+	values = list(data.values())
+	if table_name in dbt.statement_tables:
+		columns += ", updated_at"
+		placeholders += ", now()"
 
 	query = f"""
 		INSERT INTO {table_name} ({columns})
@@ -11,7 +18,7 @@ def query_insert(table_name, data: dict) -> list[str, list]:
 		ON CONFLICT DO NOTHING;
 	"""
 
-	return [query, list(data.values())]
+	return [query, values]
 
 
 def query_upsert(table_name, data: dict, conflict_keys: dict) -> list[str, list]:
@@ -36,6 +43,8 @@ def query_upsert(table_name, data: dict, conflict_keys: dict) -> list[str, list]
 	placeholders = ", ".join(["%s"] * len(data))
 	conflict_cols = ", ".join(conflict_keys.keys())
 	update_clause = ", ".join([f"{col} = EXCLUDED.{col}" for col in data.keys()])
+	if table_name in dbt.statement_tables:
+		update_clause += ", updated_at = now()"
 
 	query = f"""
 		INSERT INTO {table_name} ({columns})

@@ -16,7 +16,18 @@ class YFinanceSource:
 	'''
 
 	def __init__(self, max_workers: int = MAX_WORKERS):
+		import logging
+		import warnings
+
 		import yfinance as yf
+		import pandas as pd
+
+		# yfinance installs its own warnings filter (^yfinance -> "default")
+		# at import time, which would override any earlier "ignore" filter.
+		# Re-apply after the import so Pandas4Warning noise stays suppressed.
+		warnings.filterwarnings("ignore", category=pd.errors.Pandas4Warning)
+		# yfinance logs raw HTTP errors (e.g. 404 for unknown tickers) to stderr
+		logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 
 		self._yf = yf
 		self._max_workers = max_workers
@@ -37,15 +48,21 @@ class YFinanceSource:
 
 		with ThreadPoolExecutor(max_workers=self._max_workers) as pool:
 			futures = {pool.submit(worker, s): s for s in symbols}
-			for future in as_completed(futures):
-				symbol = futures[future]
-				try:
-					result_symbol, result = future.result()
-					if result is not None:
-						out[result_symbol] = result
-				except Exception as err:
-					tb = traceback.extract_tb(err.__traceback__)[-1]
-					printf(f"{symbol}: {err} (File '{tb.filename}', line {tb.lineno})", lv.WARNING)
+			try:
+				for future in as_completed(futures):
+					symbol = futures[future]
+					try:
+						result_symbol, result = future.result()
+						if result is not None:
+							out[result_symbol] = result
+					except Exception as err:
+						tb = traceback.extract_tb(err.__traceback__)[-1]
+						printf(f"{symbol}: {err} (File '{tb.filename}', line {tb.lineno})", lv.WARNING)
+			except KeyboardInterrupt:
+				# Do not wait for in-flight yfinance calls; cancel pending work.
+				pool.shutdown(wait=False, cancel_futures=True)
+				printf("yfinance batch interrupted, cancelling pending fetches", lv.WARNING)
+				raise
 
 		printf(f"yfinance {label}: {len(out)}/{len(symbols)} symbols fetched", lv.INFO)
 		return out
@@ -155,7 +172,7 @@ class YFinanceSource:
 	def history_payload(self, symbol: str, period: str = "max") -> dict | None:
 		'''
 		Normalized market payload from one history call:
-		{price_rows: [{date, open, high, low, close, volume, adj_close}],
+		{price_rows: [{date, open, high, low, close, volume}],
 		div_events: [{date, amount}], split_events: [{date, factor}]}
 		'''
 		df = self.history(symbol, period)
@@ -174,7 +191,6 @@ class YFinanceSource:
 				"low": row.get("Low"),
 				"close": row.get("Close"),
 				"volume": row.get("Volume"),
-				"adj_close": row.get("Adj Close"),
 			})
 			div = row.get("Dividends")
 			if div is not None and float(div) != 0:

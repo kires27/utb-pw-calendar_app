@@ -25,9 +25,9 @@ class FailoverSource:
 	Real sources have no .get, so get() duck-types any callable member.
 
 	Prices are all-or-nothing per symbol's full history: sources may carry
-	different event completeness (dividends/splits), and adj_close is
-	recomputed over the whole series - splicing histories mid-way would
-	corrupt every row before the splice point.
+	different event completeness (dividends/splits), and events drive
+	dividend/split-adjusted series derived on read - splicing histories
+	mid-way would corrupt every row before the splice point.
 	'''
 
 	def __init__(self, primary, fallback, validate=nonempty, label: str = "failover"):
@@ -47,33 +47,44 @@ class FailoverSource:
 				pass
 		return None, None
 
-	def _per_symbol(self, symbols: list[str], primary_fn, fallback_fn, label: str) -> dict:
+	def _per_symbol(self, symbols: list[str], primary_fn, fallback_fn, label: str,
+			primary_name: str = None, fallback_name: str = None) -> dict:
 		'''
 		Primary per symbol; on raise/invalid result, retry via fallback_fn.
 		Returns {symbol: result} only for symbols served by either source.
+		primary_name/fallback_name: names used in logs/counters. Defaults to
+		constructor order; pass explicitly when a method inverts the roles
+		(e.g. dividends serves yfinance first).
 		'''
+		primary_name = primary_name or type(self.primary).__name__
+		fallback_name = fallback_name or type(self.fallback).__name__
 		out: dict = {}
+		served_by = {primary_name: 0, fallback_name: 0}
 		for symbol in symbols:
 			try:
 				result = primary_fn(symbol)
 				if self.validate(result):
 					out[symbol] = result
+					served_by[primary_name] += 1
 					continue
 			except Exception as err:
 				tb = traceback.extract_tb(err.__traceback__)[-1]
-				printf(f"{symbol}: primary {label} failed ({err}) (File '{tb.filename}', line {tb.lineno})", lv.WARNING)
+				printf(f"{symbol}: {primary_name} {label} failed ({err}) (File '{tb.filename}', line {tb.lineno})", lv.WARNING)
 			try:
 				result = fallback_fn(symbol)
 				if self.validate(result):
 					out[symbol] = result
-					printf(f"{symbol}: {label} served by fallback", lv.INFO)
+					served_by[fallback_name] += 1
+					printf(f"{symbol}: {label} served by ({fallback_name})", lv.INFO)
 					continue
 			except Exception as err:
 				tb = traceback.extract_tb(err.__traceback__)[-1]
-				printf(f"{symbol}: fallback {label} failed ({err}) (File '{tb.filename}', line {tb.lineno})", lv.WARNING)
+				printf(f"{symbol}: {fallback_name} {label} failed ({err}) (File '{tb.filename}', line {tb.lineno})", lv.WARNING)
 			printf(f"{symbol}: {label} unavailable from both sources", lv.WARNING)
 		if len(out) < len(symbols):
 			printf(f"{label}: {len(out)}/{len(symbols)} symbols served", lv.INFO)
+		breakdown = ", ".join(f"{name}: {n}" for name, n in served_by.items() if n)
+		printf(f"{label} served by {breakdown}", lv.INFO)
 		return out
 
 	# --- market data: all-or-nothing per symbol's full history ---
@@ -87,12 +98,38 @@ class FailoverSource:
 		return self._per_symbol(symbols, lambda s: self.primary.prices([s]).get(s), fallback, "prices")
 
 	def dividends(self, symbols: list[str]) -> dict[str, list[dict]]:
-		'''symbol -> [{date, amount}] from primary events or yfinance history payload.'''
-		def fallback(symbol: str):
+		'''
+		symbol -> [{date, amount}] full precision.
+
+		yfinance is primary: DefeatBeta stores split-adjusted amounts
+		rounded to 2dp, which zeroes out tiny pre-split dividends.
+		DefeatBeta stays as fallback. Lists containing amount == 0 are
+		rejected (a real dividend is never 0 - that's source corruption).
+		'''
+		def divs_valid(rows) -> bool:
+			return bool(rows) and all(r.get("amount") != 0 for r in rows)
+
+		# yfinance primary (full precision), DefeatBeta fallback.
+		# Note the FailoverSource constructor still lists DefeatBeta first -
+		# prices/splits use it as primary. Dividends intentionally invert,
+		# so pass names explicitly to keep logs/counters truthful.
+		def primary(symbol: str):
 			payload = self.fallback.history_payload(symbol)
 			return payload["div_events"] if payload else None
 
-		return self._per_symbol(symbols, lambda s: self.primary.dividends([s]).get(s), fallback, "dividends")
+		def fallback(symbol: str):
+			rows = self.primary.dividends([symbol]).get(symbol)
+			return rows if divs_valid(rows) else None
+
+		def primary_validated(symbol: str):
+			rows = primary(symbol)
+			return rows if divs_valid(rows) else None
+
+		return self._per_symbol(
+			symbols, primary_validated, fallback, "dividends",
+			primary_name=type(self.fallback).__name__,
+			fallback_name=type(self.primary).__name__,
+		)
 
 	def splits(self, symbols: list[str]) -> dict[str, list[dict]]:
 		'''symbol -> [{date, factor}] from primary events or yfinance history payload.'''
@@ -114,6 +151,9 @@ class FailoverSource:
 
 	def us_members(self, symbols: list[str]) -> set[str]:
 		return self.primary.us_members(symbols)
+
+	def officers(self, symbols: list[str]) -> dict[str, list[dict]]:
+		return self.primary.officers(symbols)
 
 	def statements(self, symbols: list[str], finance_type: str, period_type: str = "annual") -> dict[str, list[dict]]:
 		return self.primary.statements(symbols, finance_type, period_type)

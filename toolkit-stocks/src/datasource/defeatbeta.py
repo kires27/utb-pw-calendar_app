@@ -2,6 +2,7 @@ import traceback
 
 import pandas as pd
 
+from lib.functions.data_types import price_history_cutoff
 from lib.module.printf import printf, level as lv
 
 
@@ -103,13 +104,15 @@ class DefeatBetaSource:
 		return out
 
 	def prices(self, symbols: list[str]) -> dict[str, list[dict]]:
-		'''symbol -> full price history rows sorted by date desc: {date, open, high, low, close, volume}.'''
+		'''symbol -> price history rows sorted by date desc: {date, open, high, low, close, volume}.'''
 		out: dict[str, list[dict]] = {}
+		cutoff = price_history_cutoff()
 		for chunk in self._chunks(symbols):
 			sql = f"""
 				SELECT symbol, report_date, open, high, low, close, volume
 				FROM read_parquet('{self._url('stock_prices')}')
 				WHERE symbol IN ({self._in_clause(chunk)})
+					AND report_date >= '{cutoff.isoformat()}'
 			"""
 			df = self._query(sql)
 			if df is None:

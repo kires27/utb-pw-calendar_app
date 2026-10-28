@@ -13,67 +13,17 @@ def _clean(value) -> float | None:
 		return None
 
 
-def compute_adj_close(rows_desc: list[dict], div_events: list[dict], split_events: list[dict]) -> dict[str, float]:
+def build_price_rows(symbol: str, stock_id: int, rows_desc: list[dict], latest_date) -> list[dict]:
 	'''
-	Recompute dividend+split adjusted close over the full price history.
+	Transform price history into DB rows, incremental: only dates on/after
+	latest_date are emitted (None = full history, e.g. --force).
 
-	rows_desc: price rows sorted newest-first: {date, close, ...}
-	div_events: [{date, amount}], split_events: [{date, factor}]
-
-	Walks backwards from the newest close (adj = close). Events apply to all
-	prices strictly before the event date - even when the event date itself
-	has no price row (holiday). Dividend scaling references the close of the
-	nearest price row after the event (last seen while walking backwards).
-	Returns {date: adj_close}.
-	'''
-	events: list[tuple[str, str, object]] = []
-	for d in div_events:
-		events.append((str(d["date"])[:10], "div", d["amount"]))
-	for d in split_events:
-		events.append((str(d["date"])[:10], "split", d["factor"]))
-	events.sort(key=lambda e: e[0], reverse=True)
-
-	factor = 1.0
-	last_seen_close: float | None = None
-	out: dict[str, float] = {}
-	event_index = 0
-
-	for row in rows_desc:
-		date = str(row["date"])[:10]
-		close = _clean(row["close"])
-		if close is None:
-			continue
-
-		# Apply every event newer than this price row (walking backwards)
-		while event_index < len(events) and events[event_index][0] > date:
-			_, kind, value = events[event_index]
-			if kind == "div":
-				div = _clean(value)
-				if div is not None and last_seen_close:
-					factor *= 1.0 - div / last_seen_close
-			else:
-				split = _clean(value)
-				if split is not None and split != 0:
-					factor *= 1.0 / split
-			event_index += 1
-
-		out[date] = close * factor
-		last_seen_close = close
-
-	return out
-
-
-def build_price_rows(symbol: str, stock_id: int, rows_desc: list[dict], div_events: list[dict], split_events: list[dict], latest_date) -> list[dict]:
-	'''
-	Transform full price history into DB rows, incremental: only dates on/after
-	latest_date are emitted, but adjustment uses the full history so past
-	dividends/splits stay priced in.
+	Rows are as-traded OHLCV; adjustment (dividends/splits) is derived on
+	read from stock_dividend + stock_split, not stored.
 	'''
 	try:
 		if stock_id is None:
 			raise TypeError("stock_id is None")
-
-		adj_close_by_date = compute_adj_close(rows_desc, div_events, split_events)
 
 		rows = []
 		for row in rows_desc:
@@ -93,7 +43,6 @@ def build_price_rows(symbol: str, stock_id: int, rows_desc: list[dict], div_even
 				"low": _clean(row.get("low")),
 				"close": close,
 				"volume": _clean(row.get("volume")),
-				"adj_close": adj_close_by_date.get(d),
 			})
 
 		return rows

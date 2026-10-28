@@ -31,15 +31,25 @@ def test_dividend_rows_bad_date_skipped():
 	assert rows == []
 
 
+def test_dividend_rows_zero_amount_skipped():
+	rows = build_dividend_rows(
+		"TEST", 5,
+		[{"date": "2012-11-20", "amount": 0}, {"date": "2024-06-11", "amount": 0.01}],
+		None,
+	)
+	assert rows == [{"stock_id": 5, "date": "2024-06-11", "dividend": 0.01}]
+
+
 def test_split_rows_basic_and_int_factor():
 	events = [
 		{"date": "2024-06-10", "factor": 4},	 # int-valued -> int
 		{"date": "2020-05-01", "factor": 1.5},	# fractional stays float
 	]
 	rows = build_split_rows("TEST", 3, events, None)
+	# oldest first: split-trigger rebasis applies in insertion order
 	assert rows == [
-		{"stock_id": 3, "date": "2024-06-10", "factor": 4},
 		{"stock_id": 3, "date": "2020-05-01", "factor": 1.5},
+		{"stock_id": 3, "date": "2024-06-10", "factor": 4},
 	]
 
 

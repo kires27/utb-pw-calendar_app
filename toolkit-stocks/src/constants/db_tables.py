@@ -7,3 +7,6 @@ historical_price =	"stock_historical_price"
 dividend =			"stock_dividend"
 analysis =			"stock_financial_analysis"
 stock_split =		"stock_split"
+
+# Tables carrying an updated_at stamp for freshness-based skipping.
+statement_tables =	{balance_sheet, cash_flow, income_statement}

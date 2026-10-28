@@ -61,8 +61,8 @@ def calculate_quality_score(
 
 	for group_name, group in GROUPS.items():
 		scores = [
-			target_metrics[m] 
-			for m in group["metrics"] 
+			target_metrics[m]
+			for m in group["metrics"]
 			if m in target_metrics and target_metrics[m] is not None
 		]
 		avg = sum(scores) / len(scores) if scores else 0.0

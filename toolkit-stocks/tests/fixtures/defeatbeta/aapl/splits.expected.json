@@ -1,12 +1,7 @@
 [
  {
-  "date": "2020-08-31",
-  "factor": 4,
-  "stock_id": 1
- },
- {
-  "date": "2014-06-09",
-  "factor": 7,
+  "date": "2000-06-21",
+  "factor": 2,
   "stock_id": 1
  },
  {
@@ -15,8 +10,13 @@
   "stock_id": 1
  },
  {
-  "date": "2000-06-21",
-  "factor": 2,
+  "date": "2014-06-09",
+  "factor": 7,
+  "stock_id": 1
+ },
+ {
+  "date": "2020-08-31",
+  "factor": 4,
   "stock_id": 1
  }
 ]

@@ -37,7 +37,6 @@ def _check_price_rows(rows, source):
 		for field in ("open", "high", "low", "close"):
 			v = r[field]
 			assert v is None or (isinstance(v, float) and v > 0 and not math.isnan(v)), f"{source}: bad {field} {v}"
-		assert r["adj_close"] is None or r["adj_close"] <= r["close"] * 1.0001, f"{source}: adj_close > close"
 
 
 def test_yfinance_history_invariants():

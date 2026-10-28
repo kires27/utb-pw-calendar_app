@@ -5,6 +5,7 @@ from lib.module.printf import printf, level as lv
 
 _connection = None
 
+
 def get_connection():
 	"""Return a live connection, reconnecting if necessary."""
 	global _connection

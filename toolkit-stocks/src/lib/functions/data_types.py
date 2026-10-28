@@ -1,5 +1,13 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from datetime import date as dtdate
+
+# Max age of historical prices (10 years, incl. leap days).
+PRICE_HISTORY_DAYS = 3652
+
+
+def price_history_cutoff() -> dtdate:
+	'''Oldest date kept for historical prices (today - 10 years).'''
+	return dtdate.today() - timedelta(days=PRICE_HISTORY_DAYS)
 
 
 def time_to_timestamptz(time: str, time_format: str = "%Y-%m-%d %H:%M:%S") -> timezone.utc:
