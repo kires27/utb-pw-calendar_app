@@ -27,7 +27,15 @@ jobs:
       - name: Run script
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python src/main.py --prod --fetch prices metrics
+        run: python src/main.py --prod --fetch overview balance cash income prices metrics splits
+
+      - name: Upload run summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-summary-daily
+          path: toolkit-stocks/run_summary.txt
+          if-no-files-found: ignore
 
       - name: Verify run
         if: always()

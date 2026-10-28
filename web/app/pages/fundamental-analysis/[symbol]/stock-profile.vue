@@ -42,6 +42,17 @@ const dividendYears = computed(() => {
 	}))
 })
 
+// Dividends are split-adjusted (today-basis) and can be tiny — e.g. NVDA
+// 2012 = 0.001875. formatCurrency's default 2 decimals would show 0.00.
+// Show 6 decimals for sub-1 amounts, keep normal 2 for the rest.
+const formatDividend = (amount) => {
+	if (amount == null || isNaN(amount)) return null
+	const a = Number(amount)
+	return a >= 1
+		? formatCurrency(a, stockData.currency, 2)
+		: formatCurrency(a, stockData.currency, 6)
+}
+
 const companyInfo = computed(() => [
 	{ label: "Full Name", value: stockData.value?.name },
 	{ label: "Founded", value: "2003" },
@@ -143,7 +154,7 @@ onBeforeUnmount(() => ro?.disconnect())
 				<template v-if="dividendYears.length">
 					<div class="dividend-summary">
 						<Text variant="body-sm" tone="muted">
-							{{ dividendYears[0].payments[0].amount }} latest · {{ (events.dividends ?? []).length }} payments since
+							{{ formatDividend(dividendYears[0].payments[0].amount) }} latest · {{ (events.dividends ?? []).length }} payments since
 							{{ dividendYears[dividendYears.length - 1].year }}
 						</Text>
 					</div>
@@ -152,12 +163,12 @@ onBeforeUnmount(() => ro?.disconnect())
 							<div class="year-header">
 								<Text variant="body-sm" weight="medium">{{ y.year }}</Text>
 								<Text variant="body-sm" tone="muted">
-									{{ y.payments.length }} payments · {{ formatCurrency(y.total, stockData.currency) }}
+									{{ y.payments.length }} payments · {{ formatDividend(y.total) }}
 								</Text>
 							</div>
 							<div v-for="p in y.payments" :key="p.date" class="payment-row">
 								<Text variant="body-sm" tone="muted">{{ p.date }}</Text>
-								<Text variant="body-sm">{{ formatCurrency(p.amount, stockData.currency) }}</Text>
+								<Text variant="body-sm">{{ formatDividend(p.amount) }}</Text>
 							</div>
 						</div>
 					</div>

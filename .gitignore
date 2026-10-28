@@ -48,7 +48,6 @@ concept
 .vscode
 src/data_cache/
 TODO.md
-worklog.md
 log/
 .playwright-mcp
 run_summary.txt

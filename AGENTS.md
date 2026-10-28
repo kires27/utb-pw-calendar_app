@@ -220,7 +220,7 @@ Flow: industry → get peer IDs → fetch their financial analysis at same fisca
 
 ## DB Schema Notes
 
-- `stock_dividend.dividend` stores split-adjusted amounts (today-basis, not declared). New split insert rebases older rows via `trg_stock_split_recalc` trigger (AFTER INSERT on `stock_split`); `split_adjusted_on` column (default `now()`) guards against double division — never set it from Python. Pipeline must NEVER update `stock_split` (INSERT ... ON CONFLICT DO NOTHING only); `build_split_rows` sorts events oldest-first.
+- `stock_dividend.dividend` and `stock_historical_price` OHLCV store split-adjusted values (today-basis; prices ÷factor, volume ×factor — both sources already deliver this basis). New split insert rebases older rows via `trg_stock_split_recalc` trigger (AFTER INSERT on `stock_split`); `split_adjusted_on` column (default `now()`) guards against double division — never set it from Python. Pipeline must NEVER update `stock_split` (INSERT ... ON CONFLICT DO NOTHING only); `build_split_rows` sorts events oldest-first.
 - `stock_financial_analysis` table key columns: `stock_id`, `fiscal_date`, `period` (enum: `FY`/`Q1`–`Q4`/`TTM`), `quality_score`, plus 19 metric columns.
 - All percent/ratio fields stored as raw values (0–1 or 0–100), not formatted strings.
 - Metric columns: `gross_margin`, `operating_margin`, `net_margin`, `return_on_equity`, `earnings_per_share`, `debt_to_equity`, `debt_growth`, `current_ratio`, `revenue_growth`, `gross_income_growth`, `net_income_growth`, `retained_earning_growth`, `revenues_per_share`, `capital_index`, `payback_period`, `assets_price`, `pe_ratio`, `pb_ratio`, `dividend_yield`.

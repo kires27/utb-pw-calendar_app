@@ -29,6 +29,14 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: python src/main.py --prod --fetch fa
 
+      - name: Upload run summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-summary-fa
+          path: toolkit-stocks/run_summary.txt
+          if-no-files-found: ignore
+
       - name: Verify run
         if: always()
         env:
