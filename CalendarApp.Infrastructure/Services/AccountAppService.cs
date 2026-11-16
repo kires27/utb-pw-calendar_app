@@ -2,7 +2,7 @@ using CalendarApp.Application.Abstraction;
 using CalendarApp.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
-namespace CalendarApp.Application.Implementation
+namespace CalendarApp.Infrastructure.Services
 {
     public class AccountAppService : IAccountAppService
     {

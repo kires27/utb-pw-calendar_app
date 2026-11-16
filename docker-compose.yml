@@ -24,7 +24,6 @@ services:
       ConnectionStrings__MySQL: "server=db;database=calendar_db;user=root;password=root"
     volumes:
       - .:/src
-      - ./.docker/nuget:/src/.docker/nuget
     depends_on:
       db: { condition: service_healthy }
     command: ["bash", "-c", "dotnet tool restore && dotnet tool run dotnet-ef database update --project CalendarApp.Infrastructure --startup-project CalendarApp.Web"]
@@ -42,7 +41,6 @@ services:
       ConnectionStrings__MySQL: "server=db;database=calendar_db;user=root;password=root"
     volumes:
       - .:/src
-      - ./.docker/nuget:/src/.docker/nuget
     ports:
       - "5292:5292"
     depends_on:
@@ -53,3 +51,4 @@ services:
 volumes:
   pw_calendar_db:
     name: pw_calendar_db
+    external: true

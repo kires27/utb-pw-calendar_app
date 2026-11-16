@@ -105,11 +105,11 @@ docker compose run --rm web bash -c "dotnet tool restore && \
 seeded via EF Core `HasData` in `CalendarDbContext` (migration
 `SeedDataInDbContext`), applied by the migrator on `docker compose up`:
 
-*username*	*email*					*password*			*role*
-admin		admin@calendarapp.com	Admin123!			Admin
+*username*	*email*					        *password*		*role*
+admin		    admin@calendarapp.com	  Admin123!			Admin
 alexjohnson	alex.johnson@email.com	User123!			User
-sarahchen	sarah.chen@email.com	User123!			User
-mikedavis	mike.davis@email.com	User123!			User
+sarahchen	  sarah.chen@email.com	  User123!			User
+mikedavis	  mike.davis@email.com	  User123!			User
 
 > log in with the **username** (not the email)
 

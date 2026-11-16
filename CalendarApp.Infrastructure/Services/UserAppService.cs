@@ -1,11 +1,10 @@
 using CalendarApp.Application.Abstraction;
 using CalendarApp.Application.Models;
-using CalendarApp.Domain.Entities;
 using CalendarApp.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace CalendarApp.Application.Implementation
+namespace CalendarApp.Infrastructure.Services
 {
     public class UserAppService : IUserAppService
     {

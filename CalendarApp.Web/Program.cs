@@ -6,6 +6,7 @@ using CalendarApp.Infrastructure.Identity;
 using CalendarApp.Application.Abstraction;
 using CalendarApp.Application.Implementation;
 using CalendarApp.Infrastructure.Database;
+using CalendarApp.Infrastructure.Services;
 using CalendarApp.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
