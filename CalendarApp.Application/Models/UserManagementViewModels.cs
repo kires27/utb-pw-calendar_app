@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using CalendarApp.Application.Abstraction;
+using CalendarApp.Domain.Abstraction;
 
 namespace CalendarApp.Application.Models
 {

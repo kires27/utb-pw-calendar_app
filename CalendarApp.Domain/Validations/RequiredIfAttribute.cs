@@ -1,13 +1,16 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace CalendarApp.Application.Validations
+namespace CalendarApp.Domain.Validations
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class RequiredIfAttribute : ValidationAttribute, IClientModelValidator
+    public class RequiredIfAttribute : ValidationAttribute
     {
         private readonly string _dependentProperty;
         private readonly object _targetValue;
+
+        public string DependentProperty => _dependentProperty;
+
+        public object TargetValue => _targetValue;
 
         public RequiredIfAttribute(string dependentProperty, object targetValue)
         {
@@ -47,14 +50,6 @@ namespace CalendarApp.Application.Validations
             }
 
             return ValidationResult.Success;
-        }
-
-        public void AddValidation(ClientModelValidationContext context)
-        {
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val", "true");
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val-requiredif", FormatErrorMessage(context.ModelMetadata.GetDisplayName()));
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val-requiredif-dependentproperty", _dependentProperty);
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val-requiredif-targetvalue", Convert.ToString(_targetValue)?.ToLowerInvariant() ?? "true");
         }
     }
 }

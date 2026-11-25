@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using CalendarApp.Domain.Entities;
-using CalendarApp.Application.Abstraction;
-using CalendarApp.Application.Validations;
+using CalendarApp.Domain.Abstraction;
+using CalendarApp.Domain.Validations;
 
 namespace CalendarApp.Application.Models
 {

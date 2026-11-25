@@ -1,6 +1,6 @@
 @model CalendarApp.Application.Models.EventEditViewModel
 @using System.Text.Json
-@{ var users = (Dictionary<int, CalendarApp.Application.Models.UserBasicDto>)ViewBag.Users; }
+@{ var users = (Dictionary<int, CalendarApp.Domain.Abstraction.UserBasicDto>)ViewBag.Users; }
 @{
     ViewData["Title"] = "Edit Event (Admin)";
 

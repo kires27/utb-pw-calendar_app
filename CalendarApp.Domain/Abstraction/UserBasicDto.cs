@@ -1,4 +1,4 @@
-namespace CalendarApp.Application.Models
+namespace CalendarApp.Domain.Abstraction
 {
     public class UserBasicDto
     {

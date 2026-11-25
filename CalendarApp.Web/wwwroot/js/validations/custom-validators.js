@@ -1,6 +1,7 @@
 // Client-side validation adapters for the custom validation attributes.
-// The matching data-val-* attributes are emitted by the attribute classes in
-// CalendarApp.Application/Validations (IClientModelValidator implementations).
+// The matching data-val-* attributes are emitted by the adapter classes in
+// CalendarApp.Web/Validation, which wrap the attributes in
+// CalendarApp.Domain/Validations.
 
 // --- TextLengthRangeAttribute -------------------------------------------------
 $.validator.addMethod('textlengthrange', function (value, element, params) {

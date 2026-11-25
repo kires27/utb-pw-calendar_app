@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using CalendarApp.Application.Abstraction;
+using CalendarApp.Domain.Abstraction;
 using CalendarApp.Domain.Entities;
 using CalendarApp.Application.Models;
 using System.Security.Claims;

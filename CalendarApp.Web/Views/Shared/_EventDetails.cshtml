@@ -2,7 +2,7 @@
 @using CalendarApp.Domain.Entities
 @using System.Security.Claims
 @{
-    var users = (Dictionary<int, CalendarApp.Application.Models.UserBasicDto>)ViewBag.Users;
+    var users = (Dictionary<int, CalendarApp.Domain.Abstraction.UserBasicDto>)ViewBag.Users;
     var isAdmin = (bool)(ViewBag.IsAdminContext ?? false);
     var returnView = (string?)ViewBag.ReturnView ?? "list";
     var returnDate = ((DateTime?)ViewBag.ReturnDate)?.ToString("yyyy-MM-dd");

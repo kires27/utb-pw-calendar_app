@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.DataAnnotations;
+using CalendarApp.Domain.Abstraction;
 using CalendarApp.Domain.Entities;
 using CalendarApp.Domain.Repositories;
 using CalendarApp.Infrastructure.Identity;
@@ -8,10 +10,12 @@ using CalendarApp.Application.Implementation;
 using CalendarApp.Infrastructure.Database;
 using CalendarApp.Infrastructure.Services;
 using CalendarApp.Infrastructure.Repositories;
+using CalendarApp.Web.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<IValidationAttributeAdapterProvider, CustomValidationAttributeAdapterProvider>();
 
 var connectionString = builder.Configuration.GetConnectionString("MySQL");
 ServerVersion serverVersion = new MySqlServerVersion("8.0.29");

@@ -1,5 +1,6 @@
 using CalendarApp.Application.Abstraction;
 using CalendarApp.Application.Models;
+using CalendarApp.Domain.Abstraction;
 using CalendarApp.Domain.Entities;
 using CalendarApp.Domain.Repositories;
 

@@ -1,13 +1,14 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace CalendarApp.Application.Validations
+namespace CalendarApp.Domain.Validations
 {
     // DateTime property must not be before another DateTime property on the same object
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class DateNotBeforeAttribute : ValidationAttribute, IClientModelValidator
+    public class DateNotBeforeAttribute : ValidationAttribute
     {
         private readonly string _otherProperty;
+
+        public string OtherProperty => _otherProperty;
 
         public DateNotBeforeAttribute(string otherProperty)
         {
@@ -40,13 +41,6 @@ namespace CalendarApp.Application.Validations
             }
 
             return ValidationResult.Success;
-        }
-
-        public void AddValidation(ClientModelValidationContext context)
-        {
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val", "true");
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val-datenotbefore", FormatErrorMessage(context.ModelMetadata.GetDisplayName()));
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val-datenotbefore-otherproperty", _otherProperty);
         }
     }
 }

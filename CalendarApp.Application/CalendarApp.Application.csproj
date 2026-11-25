@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\CalendarApp.Domain\CalendarApp.Domain.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-namespace CalendarApp.Application.Abstraction
+namespace CalendarApp.Domain.Abstraction
 {
     public interface IAccountAppService
     {

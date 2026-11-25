@@ -1,12 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace CalendarApp.Application.Validations
+namespace CalendarApp.Domain.Validations
 {
     // Validates email addresses separated by commas or semicolons
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class EmailListAttribute : ValidationAttribute, IClientModelValidator
+    public class EmailListAttribute : ValidationAttribute
     {
         private static readonly Regex EmailRegex =
             new("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled);
@@ -48,12 +47,6 @@ namespace CalendarApp.Application.Validations
             }
 
             return ValidationResult.Success;
-        }
-
-        public void AddValidation(ClientModelValidationContext context)
-        {
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val", "true");
-            ClientValidationHelper.MergeAttribute(context.Attributes, "data-val-emaillist", ErrorMessage ?? "One or more of the invited email addresses is invalid.");
         }
     }
 }

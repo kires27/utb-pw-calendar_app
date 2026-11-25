@@ -1,5 +1,4 @@
-using CalendarApp.Application.Abstraction;
-using CalendarApp.Application.Models;
+using CalendarApp.Domain.Abstraction;
 using CalendarApp.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

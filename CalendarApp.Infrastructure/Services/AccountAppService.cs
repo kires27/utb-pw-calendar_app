@@ -1,4 +1,4 @@
-using CalendarApp.Application.Abstraction;
+using CalendarApp.Domain.Abstraction;
 using CalendarApp.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
